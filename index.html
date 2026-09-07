@@ -1,0 +1,2144 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Excel → WhatsApp Assistant</title>
+
+<!-- SheetJS - Excel reader -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f7fb;
+    color: #172033;
+}
+
+/* ================= HEADER ================= */
+
+.header {
+    background: #172033;
+    color: white;
+    padding: 16px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    font-size: 21px;
+    font-weight: bold;
+}
+
+.header small {
+    opacity: .75;
+}
+
+/* ================= LAYOUT ================= */
+
+.container {
+    max-width: 1450px;
+    margin: auto;
+    padding: 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 330px 1fr 370px;
+    gap: 18px;
+}
+
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 3px 15px rgba(0,0,0,.07);
+    margin-bottom: 18px;
+}
+
+.card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+/* ================= BUTTONS ================= */
+
+button {
+    border: 0;
+    border-radius: 7px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+button:hover {
+    opacity: .9;
+}
+
+.primary {
+    background: #1f9d55;
+    color: white;
+}
+
+.secondary {
+    background: #e8edf5;
+    color: #172033;
+}
+
+.danger {
+    background: #dc3545;
+    color: white;
+}
+
+.warning {
+    background: #f0ad00;
+    color: white;
+}
+
+.whatsapp {
+    background: #25d366;
+    color: white;
+}
+
+/* ================= FILE UPLOAD ================= */
+
+.upload-box {
+    border: 2px dashed #bbc6d6;
+    border-radius: 10px;
+    padding: 25px 10px;
+    text-align: center;
+    cursor: pointer;
+    background: #fafcff;
+}
+
+.upload-box:hover {
+    background: #f1f7ff;
+}
+
+.upload-box input {
+    display: none;
+}
+
+/* ================= INPUTS ================= */
+
+input,
+select,
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccd4df;
+    border-radius: 7px;
+    font-size: 14px;
+    margin-top: 6px;
+}
+
+textarea {
+    min-height: 190px;
+    resize: vertical;
+}
+
+label {
+    display: block;
+    margin-top: 12px;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+/* ================= STATS ================= */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.stat {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.06);
+}
+
+.stat strong {
+    display: block;
+    font-size: 24px;
+    margin-top: 5px;
+}
+
+/* ================= CONTACT TABLE ================= */
+
+.table-wrapper {
+    overflow-x: auto;
+    max-height: 550px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+th,
+td {
+    padding: 9px;
+    border-bottom: 1px solid #e5e9ef;
+    text-align: left;
+    white-space: nowrap;
+}
+
+th {
+    background: #f5f7fa;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+tr:hover {
+    background: #f7fafc;
+}
+
+.selected-row {
+    background: #eefbf3 !important;
+}
+
+.status {
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.status-pending {
+    background: #edf1f5;
+}
+
+.status-opened {
+    background: #e8f3ff;
+}
+
+.status-sent {
+    background: #dff7e8;
+}
+
+.status-skipped {
+    background: #ffe5e7;
+}
+
+/* ================= PREVIEW ================= */
+
+.whatsapp-preview {
+    background: #efeae2;
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 280px;
+}
+
+.message-bubble {
+    background: #d9fdd3;
+    padding: 12px;
+    border-radius: 9px;
+    max-width: 90%;
+    margin-left: auto;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    box-shadow: 0 1px 2px rgba(0,0,0,.1);
+}
+
+/* ================= VARIABLES ================= */
+
+.variables {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.variable {
+    background: #edf2f7;
+    border: 1px solid #d5dce5;
+    padding: 5px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.variable:hover {
+    background: #dfe8f2;
+}
+
+/* ================= MAPPING ================= */
+
+.mapping-row {
+    margin-bottom: 12px;
+}
+
+.mapping-row select {
+    margin-top: 4px;
+}
+
+/* ================= TOOLBAR ================= */
+
+.toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.toolbar input {
+    flex: 1;
+    min-width: 180px;
+    margin-top: 0;
+}
+
+/* ================= QUEUE ================= */
+
+.queue-item {
+    border: 1px solid #e1e6ed;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.queue-item:hover {
+    background: #f6f9fc;
+}
+
+.queue-item.active {
+    border-left: 4px solid #25d366;
+    background: #f1fff5;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width:1100px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media(max-width:700px) {
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .header {
+        padding: 14px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="logo">💬 Excel → WhatsApp Assistant</div>
+    <small>Generic Contact Messaging Tool</small>
+</header>
+
+<div class="container">
+
+    <!-- ================= STATS ================= -->
+
+    <div class="stats">
+
+        <div class="stat">
+            Total
+            <strong id="totalCount">0</strong>
+        </div>
+
+        <div class="stat">
+            Selected
+            <strong id="selectedCount">0</strong>
+        </div>
+
+        <div class="stat">
+            Opened
+            <strong id="openedCount">0</strong>
+        </div>
+
+        <div class="stat">
+            Sent
+            <strong id="sentCount">0</strong>
+        </div>
+
+    </div>
+
+
+    <div class="grid">
+
+        <!-- ================================================= -->
+        <!-- LEFT PANEL -->
+        <!-- ================================================= -->
+
+        <div>
+
+            <!-- FILE -->
+            <div class="card">
+
+                <h3>📁 Import Data</h3>
+
+                <label class="upload-box">
+
+                    <div style="font-size:30px;">📊</div>
+
+                    <div>
+                        Click to upload Excel / CSV
+                    </div>
+
+                    <small>
+                        XLSX, XLS, CSV
+                    </small>
+
+                    <input
+                        type="file"
+                        id="fileInput"
+                        accept=".xlsx,.xls,.csv"
+                    >
+
+                </label>
+
+                <p id="fileName">
+                    No file selected
+                </p>
+
+            </div>
+
+
+            <!-- MAPPING -->
+            <div class="card">
+
+                <h3>🔗 Column Mapping</h3>
+
+                <div id="mappingArea">
+
+                    <p style="color:#777;">
+                        Upload an Excel file first.
+                    </p>
+
+                </div>
+
+                <button
+                    class="primary"
+                    onclick="applyMapping()"
+                >
+                    Apply Mapping
+                </button>
+
+            </div>
+
+
+            <!-- TEMPLATES -->
+            <div class="card">
+
+                <h3>📝 Message Templates</h3>
+
+                <input
+                    id="templateName"
+                    placeholder="Template name"
+                >
+
+                <button
+                    class="primary"
+                    style="margin-top:8px;"
+                    onclick="saveTemplate()"
+                >
+                    Save Template
+                </button>
+
+                <select
+                    id="templateList"
+                    onchange="loadTemplate()"
+                    style="margin-top:10px;"
+                >
+
+                    <option value="">
+                        Select saved template
+                    </option>
+
+                </select>
+
+                <button
+                    class="danger"
+                    style="margin-top:8px;"
+                    onclick="deleteTemplate()"
+                >
+                    Delete Template
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- CENTER PANEL -->
+        <!-- ================================================= -->
+
+        <div>
+
+            <div class="card">
+
+                <h3>👥 Contacts</h3>
+
+                <div class="toolbar">
+
+                    <input
+                        id="searchInput"
+                        placeholder="Search contacts..."
+                        oninput="renderTable()"
+                    >
+
+                    <button
+                        class="secondary"
+                        onclick="selectAll(true)"
+                    >
+                        Select All
+                    </button>
+
+                    <button
+                        class="secondary"
+                        onclick="selectAll(false)"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead id="tableHead"></thead>
+
+                        <tbody id="tableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+
+            <!-- QUEUE -->
+
+            <div class="card">
+
+                <h3>📤 Message Queue</h3>
+
+                <div id="queueArea">
+                    No contacts selected.
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================================================= -->
+        <!-- RIGHT PANEL -->
+        <!-- ================================================= -->
+
+        <div>
+
+            <div class="card">
+
+                <h3>📝 Message</h3>
+
+                <textarea
+                    id="messageTemplate"
+                    placeholder="Type your message here...
+
+Example:
+
+Hello {Name},
+
+Your amount is ₹{Amount}.
+
+Date: {Date}
+
+Thank you."
+                    oninput="updatePreview()"
+                ></textarea>
+
+                <h4>Available Variables</h4>
+
+                <div
+                    id="variables"
+                    class="variables"
+                >
+                </div>
+
+            </div>
+
+
+            <!-- PREVIEW -->
+
+            <div class="card">
+
+                <h3>👁 Preview</h3>
+
+                <div class="whatsapp-preview">
+
+                    <div
+                        id="messagePreview"
+                        class="message-bubble"
+                    >
+                        Your personalized message will appear here.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ACTIONS -->
+
+            <div class="card">
+
+                <h3>💬 WhatsApp</h3>
+
+                <p id="currentContact">
+                    No contact selected
+                </p>
+
+                <button
+                    class="whatsapp"
+                    style="width:100%;"
+                    onclick="openWhatsApp()"
+                >
+                    💬 Open WhatsApp
+                </button>
+
+                <button
+                    class="whatsapp"
+                    style="width:100%;margin-top:8px;"
+                    onclick="shareAllMessages()"
+                >
+                    📣 Share All Messages
+                </button>
+
+                <button
+                    class="primary"
+                    style="width:100%;margin-top:8px;"
+                    onclick="markSent()"
+                >
+                    ✓ Mark as Sent
+                </button>
+
+                <button
+                    class="warning"
+                    style="width:100%;margin-top:8px;"
+                    onclick="skipContact()"
+                >
+                    ⏭ Skip
+                </button>
+
+                <button
+                    class="secondary"
+                    style="width:100%;margin-top:8px;"
+                    onclick="nextContact()"
+                >
+                    ➡ Next Contact
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* ============================================================
+   APPLICATION STATE
+============================================================ */
+
+let data = [];
+let columns = [];
+
+let mapping = {
+    name: "",
+    phone: ""
+};
+
+let selectedRows = new Set();
+
+let statuses = {};
+
+let currentIndex = null;
+
+let templates =
+    JSON.parse(
+        localStorage.getItem("wa_templates") || "{}"
+    );
+
+
+/* ============================================================
+   FILE IMPORT
+============================================================ */
+
+document
+.getElementById("fileInput")
+.addEventListener("change", function(e) {
+
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    document.getElementById("fileName").textContent =
+        file.name;
+
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+
+        try {
+
+            const workbook =
+                XLSX.read(
+                    event.target.result,
+                    {type:"array"}
+                );
+
+            const sheetName =
+                workbook.SheetNames[0];
+
+            const sheet =
+                workbook.Sheets[sheetName];
+
+            data =
+                XLSX.utils.sheet_to_json(
+                    sheet,
+                    {
+                        defval: ""
+                    }
+                );
+
+            if (!data.length) {
+
+                alert("No data found in the file.");
+
+                return;
+            }
+
+            columns =
+                Object.keys(data[0]);
+
+            detectColumns();
+
+            renderMapping();
+
+            renderTable();
+
+            renderVariables();
+
+            updateStats();
+
+        }
+
+        catch(error) {
+
+            console.error(error);
+
+            alert(
+                "Unable to read this file."
+            );
+        }
+
+    };
+
+    reader.readAsArrayBuffer(file);
+
+});
+
+
+/* ============================================================
+   AUTOMATIC COLUMN DETECTION
+============================================================ */
+
+function detectColumns() {
+
+    const lowerColumns =
+        columns.map(
+            c => ({
+                original: c,
+                lower: c.toLowerCase()
+            })
+        );
+
+    const nameMatch =
+        lowerColumns.find(
+            c =>
+                c.lower.includes("name") ||
+                c.lower.includes("customer") ||
+                c.lower.includes("student") ||
+                c.lower.includes("employee") ||
+                c.lower.includes("contact")
+        );
+
+    const phoneMatch =
+        lowerColumns.find(
+            c =>
+                c.lower.includes("phone") ||
+                c.lower.includes("mobile") ||
+                c.lower.includes("whatsapp") ||
+                c.lower.includes("contact no") ||
+                c.lower.includes("number")
+        );
+
+    mapping.name =
+        nameMatch ? nameMatch.original : columns[0];
+
+    mapping.phone =
+        phoneMatch ?
+        phoneMatch.original :
+        columns.length > 1 ?
+        columns[1] :
+        columns[0];
+}
+
+
+/* ============================================================
+   RENDER MAPPING
+============================================================ */
+
+function renderMapping() {
+
+    const area =
+        document.getElementById("mappingArea");
+
+    area.innerHTML = "";
+
+    area.appendChild(
+        createMappingRow(
+            "Name",
+            "name",
+            mapping.name
+        )
+    );
+
+    area.appendChild(
+        createMappingRow(
+            "WhatsApp Number",
+            "phone",
+            mapping.phone
+        )
+    );
+
+}
+
+
+function createMappingRow(
+    label,
+    key,
+    selected
+) {
+
+    const div =
+        document.createElement("div");
+
+    div.className =
+        "mapping-row";
+
+    const labelElement =
+        document.createElement("label");
+
+    labelElement.textContent =
+        label;
+
+    const select =
+        document.createElement("select");
+
+    select.id =
+        "map_" + key;
+
+    columns.forEach(column => {
+
+        const option =
+            document.createElement("option");
+
+        option.value =
+            column;
+
+        option.textContent =
+            column;
+
+        if (column === selected) {
+
+            option.selected = true;
+
+        }
+
+        select.appendChild(option);
+
+    });
+
+    div.appendChild(labelElement);
+
+    div.appendChild(select);
+
+    return div;
+}
+
+
+/* ============================================================
+   APPLY MAPPING
+============================================================ */
+
+function applyMapping() {
+
+    if (!columns.length) {
+
+        alert(
+            "Please upload a file first."
+        );
+
+        return;
+    }
+
+    mapping.name =
+        document.getElementById(
+            "map_name"
+        ).value;
+
+    mapping.phone =
+        document.getElementById(
+            "map_phone"
+        ).value;
+
+    renderTable();
+
+    renderQueue();
+
+    updatePreview();
+
+}
+
+
+/* ============================================================
+   RENDER TABLE
+============================================================ */
+
+function renderTable() {
+
+    const head =
+        document.getElementById("tableHead");
+
+    const body =
+        document.getElementById("tableBody");
+
+    head.innerHTML = "";
+
+    body.innerHTML = "";
+
+    if (!data.length) return;
+
+
+    /* TABLE HEADER */
+
+    const headerRow =
+        document.createElement("tr");
+
+    const selectHeader =
+        document.createElement("th");
+
+    selectHeader.textContent =
+        "Select";
+
+    headerRow.appendChild(
+        selectHeader
+    );
+
+
+    columns.forEach(column => {
+
+        const th =
+            document.createElement("th");
+
+        th.textContent =
+            column;
+
+        headerRow.appendChild(th);
+
+    });
+
+
+    const statusHeader =
+        document.createElement("th");
+
+    statusHeader.textContent =
+        "Status";
+
+    headerRow.appendChild(
+        statusHeader
+    );
+
+    head.appendChild(headerRow);
+
+
+    /* SEARCH */
+
+    const search =
+        document
+        .getElementById("searchInput")
+        .value
+        .toLowerCase();
+
+
+    /* TABLE ROWS */
+
+    data.forEach((row,index) => {
+
+        const searchable =
+            Object.values(row)
+            .join(" ")
+            .toLowerCase();
+
+        if (
+            search &&
+            !searchable.includes(search)
+        ) {
+
+            return;
+
+        }
+
+
+        const tr =
+            document.createElement("tr");
+
+        if (
+            selectedRows.has(index)
+        ) {
+
+            tr.classList.add(
+                "selected-row"
+            );
+
+        }
+
+
+        /* CHECKBOX */
+
+        const tdCheck =
+            document.createElement("td");
+
+        const checkbox =
+            document.createElement("input");
+
+        checkbox.type =
+            "checkbox";
+
+        checkbox.checked =
+            selectedRows.has(index);
+
+        checkbox.onchange =
+            function() {
+
+                if (this.checked) {
+
+                    selectedRows.add(index);
+
+                }
+                else {
+
+                    selectedRows.delete(index);
+
+                }
+
+                updateStats();
+
+                renderQueue();
+
+                renderTable();
+
+            };
+
+
+        tdCheck.appendChild(
+            checkbox
+        );
+
+        tr.appendChild(tdCheck);
+
+
+        /* DATA */
+
+        columns.forEach(column => {
+
+            const td =
+                document.createElement("td");
+
+            td.textContent =
+                row[column];
+
+            tr.appendChild(td);
+
+        });
+
+
+        /* STATUS */
+
+        const status =
+            statuses[index] ||
+            "pending";
+
+        const statusTd =
+            document.createElement("td");
+
+        const badge =
+            document.createElement("span");
+
+        badge.className =
+            "status status-" +
+            status;
+
+        badge.textContent =
+            status.toUpperCase();
+
+        statusTd.appendChild(
+            badge
+        );
+
+        tr.appendChild(
+            statusTd
+        );
+
+
+        body.appendChild(tr);
+
+    });
+
+}
+
+
+/* ============================================================
+   SELECT ALL
+============================================================ */
+
+function selectAll(value) {
+
+    data.forEach(
+        (_,index) => {
+
+            if (value) {
+
+                selectedRows.add(index);
+
+            }
+            else {
+
+                selectedRows.delete(index);
+
+            }
+
+        }
+    );
+
+    updateStats();
+
+    renderTable();
+
+    renderQueue();
+
+}
+
+
+/* ============================================================
+   VARIABLES
+============================================================ */
+
+function renderVariables() {
+
+    const area =
+        document.getElementById(
+            "variables"
+        );
+
+    area.innerHTML = "";
+
+    columns.forEach(column => {
+
+        const span =
+            document.createElement("span");
+
+        span.className =
+            "variable";
+
+        span.textContent =
+            "{" + column + "}";
+
+        span.onclick =
+            function() {
+
+                insertVariable(
+                    "{" + column + "}"
+                );
+
+            };
+
+        area.appendChild(span);
+
+    });
+
+}
+
+
+function insertVariable(variable) {
+
+    const textarea =
+        document.getElementById(
+            "messageTemplate"
+        );
+
+    const start =
+        textarea.selectionStart;
+
+    const end =
+        textarea.selectionEnd;
+
+    const text =
+        textarea.value;
+
+    textarea.value =
+        text.substring(0,start) +
+        variable +
+        text.substring(end);
+
+    textarea.focus();
+
+    textarea.selectionStart =
+        textarea.selectionEnd =
+        start + variable.length;
+
+    updatePreview();
+
+}
+
+
+/* ============================================================
+   PERSONALIZE MESSAGE
+============================================================ */
+
+function personalize(
+    template,
+    row
+) {
+
+    if (!row) return template;
+
+    return template.replace(
+        /\{([^}]+)\}/g,
+        function(match,key) {
+
+            if (
+                Object.prototype
+                .hasOwnProperty
+                .call(row,key)
+            ) {
+
+                return row[key];
+
+            }
+
+            return match;
+
+        }
+    );
+
+}
+
+
+/* ============================================================
+   PREVIEW
+============================================================ */
+
+function updatePreview() {
+
+    const template =
+        document
+        .getElementById(
+            "messageTemplate"
+        )
+        .value;
+
+    let row = null;
+
+    if (
+        currentIndex !== null &&
+        data[currentIndex]
+    ) {
+
+        row =
+            data[currentIndex];
+
+    }
+    else if (
+        selectedRows.size > 0
+    ) {
+
+        row =
+            data[
+                [...selectedRows][0]
+            ];
+
+    }
+
+
+    const message =
+        personalize(
+            template,
+            row
+        );
+
+
+    document
+    .getElementById(
+        "messagePreview"
+    )
+    .textContent =
+        message ||
+        "Your personalized message will appear here.";
+
+}
+
+
+/* ============================================================
+   QUEUE
+============================================================ */
+
+function renderQueue() {
+
+    const area =
+        document.getElementById(
+            "queueArea"
+        );
+
+    area.innerHTML = "";
+
+    if (!selectedRows.size) {
+
+        area.textContent =
+            "No contacts selected.";
+
+        return;
+
+    }
+
+
+    [...selectedRows].forEach(index => {
+
+        const row =
+            data[index];
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "queue-item";
+
+        if (
+            currentIndex === index
+        ) {
+
+            item.classList.add(
+                "active"
+            );
+
+        }
+
+
+        const name =
+            row[mapping.name] ||
+            "Unnamed";
+
+        const phone =
+            row[mapping.phone] ||
+            "No number";
+
+
+        item.innerHTML =
+            `
+            <strong>${escapeHtml(name)}</strong>
+            <br>
+            <small>${escapeHtml(phone)}</small>
+            <br>
+            <small>
+                ${(
+                    statuses[index] ||
+                    "pending"
+                ).toUpperCase()}
+            </small>
+            `;
+
+
+        item.onclick =
+            function() {
+
+                currentIndex =
+                    index;
+
+                updateCurrentContact();
+
+                updatePreview();
+
+                renderQueue();
+
+            };
+
+
+        area.appendChild(item);
+
+    });
+
+
+    if (currentIndex === null) {
+
+        currentIndex =
+            [...selectedRows][0];
+
+        updateCurrentContact();
+
+        updatePreview();
+
+    }
+
+}
+
+
+/* ============================================================
+   CURRENT CONTACT
+============================================================ */
+
+function updateCurrentContact() {
+
+    const element =
+        document.getElementById(
+            "currentContact"
+        );
+
+    if (
+        currentIndex === null ||
+        !data[currentIndex]
+    ) {
+
+        element.textContent =
+            "No contact selected";
+
+        return;
+
+    }
+
+    const row =
+        data[currentIndex];
+
+    element.innerHTML =
+        `
+        <strong>
+            ${escapeHtml(
+                row[mapping.name] || ""
+            )}
+        </strong>
+        <br>
+        ${escapeHtml(
+            row[mapping.phone] || ""
+        )}
+        `;
+
+}
+
+
+/* ============================================================
+   OPEN WHATSAPP
+============================================================ */
+
+function normalizePhoneNumber(value) {
+
+    let phone =
+        String(value || "");
+
+    phone =
+        phone.replace(
+            /[^0-9]/g,
+            ""
+        );
+
+    if (!phone) return "";
+
+    if (phone.length === 10) {
+        phone = "91" + phone;
+    }
+
+    return phone;
+}
+
+
+function openWhatsApp() {
+
+    if (
+        currentIndex === null
+    ) {
+
+        alert(
+            "Select a contact first."
+        );
+
+        return;
+
+    }
+
+
+    const row =
+        data[currentIndex];
+
+    const phone =
+        normalizePhoneNumber(
+            row[mapping.phone]
+        );
+
+    if (!phone) {
+
+        alert(
+            "This contact does not have a valid phone number."
+        );
+
+        return;
+
+    }
+
+
+    const template =
+        document
+        .getElementById(
+            "messageTemplate"
+        )
+        .value;
+
+
+    const message =
+        personalize(
+            template,
+            row
+        );
+
+
+    const url =
+        "https://wa.me/" +
+        phone +
+        "?text=" +
+        encodeURIComponent(
+            message
+        );
+
+
+    window.open(
+        url,
+        "_blank"
+    );
+
+
+    statuses[currentIndex] =
+        "opened";
+
+
+    updateStats();
+
+    renderTable();
+
+    renderQueue();
+
+}
+
+
+function shareAllMessages() {
+
+    if (!selectedRows.size) {
+
+        alert(
+            "Select at least one contact first."
+        );
+
+        return;
+
+    }
+
+    const template =
+        document
+        .getElementById(
+            "messageTemplate"
+        )
+        .value;
+
+    const queue =
+        [...selectedRows];
+
+    let openedCount = 0;
+    let index = 0;
+
+
+    function openNextMessage() {
+
+        if (index >= queue.length) {
+
+            updateStats();
+            renderTable();
+            renderQueue();
+
+            alert(
+                "Started WhatsApp sharing for " +
+                openedCount +
+                " selected message(s)."
+            );
+
+            return;
+
+        }
+
+        const rowIndex = queue[index++];
+        const row = data[rowIndex];
+
+        if (!row) {
+            openNextMessage();
+            return;
+        }
+
+        const phone =
+            normalizePhoneNumber(
+                row[mapping.phone]
+            );
+
+        if (!phone) {
+            openNextMessage();
+            return;
+        }
+
+        const message =
+            personalize(
+                template,
+                row
+            );
+
+        const url =
+            "https://wa.me/" +
+            phone +
+            "?text=" +
+            encodeURIComponent(
+                message
+            );
+
+        const popup =
+            window.open(
+                url,
+                "_blank"
+            );
+
+        if (!popup) {
+
+            alert(
+                "WhatsApp blocked the pop-up. Please allow pop-ups for this page and click again."
+            );
+
+            return;
+
+        }
+
+        statuses[rowIndex] = "opened";
+        openedCount++;
+
+        if (index < queue.length) {
+
+            setTimeout(
+                openNextMessage,
+                1800
+            );
+
+        }
+        else {
+
+            openNextMessage();
+
+        }
+
+    }
+
+
+    const firstRowIndex = queue[0];
+    const firstRow = data[firstRowIndex];
+
+    if (!firstRow) {
+        openNextMessage();
+        return;
+    }
+
+    const firstPhone =
+        normalizePhoneNumber(
+            firstRow[mapping.phone]
+        );
+
+    if (!firstPhone) {
+        openNextMessage();
+        return;
+    }
+
+    const firstMessage =
+        personalize(
+            template,
+            firstRow
+        );
+
+    const firstUrl =
+        "https://wa.me/" +
+        firstPhone +
+        "?text=" +
+        encodeURIComponent(
+            firstMessage
+        );
+
+    const firstPopup =
+        window.open(
+            firstUrl,
+            "_blank"
+        );
+
+    if (!firstPopup) {
+
+        alert(
+            "WhatsApp blocked the pop-up. Please allow pop-ups for this page and click again."
+        );
+
+        return;
+
+    }
+
+    statuses[firstRowIndex] = "opened";
+    openedCount++;
+    index = 1;
+
+    if (queue.length > 1) {
+
+        setTimeout(
+            openNextMessage,
+            1800
+        );
+
+    }
+    else {
+
+        updateStats();
+        renderTable();
+        renderQueue();
+
+        alert(
+            "Started WhatsApp sharing for " +
+            openedCount +
+            " selected message(s)."
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   MARK SENT
+============================================================ */
+
+function markSent() {
+
+    if (
+        currentIndex === null
+    ) {
+
+        alert(
+            "Select a contact first."
+        );
+
+        return;
+
+    }
+
+    statuses[currentIndex] =
+        "sent";
+
+    updateStats();
+
+    renderTable();
+
+    renderQueue();
+
+    nextContact();
+
+}
+
+
+/* ============================================================
+   SKIP
+============================================================ */
+
+function skipContact() {
+
+    if (
+        currentIndex === null
+    ) {
+
+        return;
+
+    }
+
+    statuses[currentIndex] =
+        "skipped";
+
+    updateStats();
+
+    renderTable();
+
+    renderQueue();
+
+    nextContact();
+
+}
+
+
+/* ============================================================
+   NEXT CONTACT
+============================================================ */
+
+function nextContact() {
+
+    if (!selectedRows.size) {
+
+        return;
+
+    }
+
+
+    const queue =
+        [...selectedRows];
+
+    const position =
+        queue.indexOf(
+            currentIndex
+        );
+
+
+    if (
+        position === -1 ||
+        position === queue.length - 1
+    ) {
+
+        currentIndex =
+            queue[0];
+
+    }
+    else {
+
+        currentIndex =
+            queue[position + 1];
+
+    }
+
+
+    updateCurrentContact();
+
+    updatePreview();
+
+    renderQueue();
+
+}
+
+
+/* ============================================================
+   STATISTICS
+============================================================ */
+
+function updateStats() {
+
+    const opened =
+        Object.values(statuses)
+        .filter(
+            x => x === "opened"
+        ).length;
+
+    const sent =
+        Object.values(statuses)
+        .filter(
+            x => x === "sent"
+        ).length;
+
+
+    document
+    .getElementById(
+        "totalCount"
+    )
+    .textContent =
+        data.length;
+
+
+    document
+    .getElementById(
+        "selectedCount"
+    )
+    .textContent =
+        selectedRows.size;
+
+
+    document
+    .getElementById(
+        "openedCount"
+    )
+    .textContent =
+        opened;
+
+
+    document
+    .getElementById(
+        "sentCount"
+    )
+    .textContent =
+        sent;
+
+}
+
+
+/* ============================================================
+   TEMPLATES
+============================================================ */
+
+function refreshTemplateList() {
+
+    const list =
+        document.getElementById(
+            "templateList"
+        );
+
+    list.innerHTML =
+        `<option value="">
+            Select saved template
+        </option>`;
+
+
+    Object.keys(templates)
+    .forEach(name => {
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value =
+            name;
+
+        option.textContent =
+            name;
+
+        list.appendChild(option);
+
+    });
+
+}
+
+
+function saveTemplate() {
+
+    const name =
+        document
+        .getElementById(
+            "templateName"
+        )
+        .value
+        .trim();
+
+    const message =
+        document
+        .getElementById(
+            "messageTemplate"
+        )
+        .value;
+
+
+    if (!name) {
+
+        alert(
+            "Enter a template name."
+        );
+
+        return;
+
+    }
+
+
+    if (!message) {
+
+        alert(
+            "Enter a message."
+        );
+
+        return;
+
+    }
+
+
+    templates[name] =
+        message;
+
+
+    localStorage.setItem(
+        "wa_templates",
+        JSON.stringify(
+            templates
+        )
+    );
+
+
+    refreshTemplateList();
+
+    alert(
+        "Template saved."
+    );
+
+}
+
+
+function loadTemplate() {
+
+    const name =
+        document
+        .getElementById(
+            "templateList"
+        )
+        .value;
+
+
+    if (!name) return;
+
+
+    document
+    .getElementById(
+        "templateName"
+    )
+    .value =
+        name;
+
+
+    document
+    .getElementById(
+        "messageTemplate"
+    )
+    .value =
+        templates[name];
+
+
+    updatePreview();
+
+}
+
+
+function deleteTemplate() {
+
+    const name =
+        document
+        .getElementById(
+            "templateList"
+        )
+        .value;
+
+
+    if (!name) {
+
+        alert(
+            "Select a template first."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        confirm(
+            "Delete this template?"
+        )
+    ) {
+
+        delete templates[name];
+
+
+        localStorage.setItem(
+            "wa_templates",
+            JSON.stringify(
+                templates
+            )
+        );
+
+
+        refreshTemplateList();
+
+    }
+
+}
+
+
+/* ============================================================
+   SECURITY / HTML ESCAPE
+============================================================ */
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* ============================================================
+   INITIALIZATION
+============================================================ */
+
+refreshTemplateList();
+
+updateStats();
+
+</script>
+
+</body>
+</html>
+```
+
